@@ -1,0 +1,84 @@
+.back {
+  text-decoration: none;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) 2fr;
+  gap: 16px;
+
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.salary {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+
+  .amount {
+    font: var(--mat-sys-headline-medium);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.facts dl {
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 12px 24px;
+
+  dt {
+    color: var(--mat-sys-on-surface-variant);
+    font-size: 12px;
+  }
+
+  dd {
+    margin: 2px 0 0;
+    overflow-wrap: anywhere;
+  }
+}
+
+.history {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  overflow-x: auto;
+
+  table {
+    background: transparent;
+  }
+}
+
+.chip {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+
+  &.inactive {
+    background: var(--mat-sys-surface-container-highest);
+    color: var(--mat-sys-on-surface-variant);
+  }
+}
+
+.up {
+  color: var(--mat-sys-primary);
+}
+
+.down {
+  color: var(--mat-sys-error);
+}

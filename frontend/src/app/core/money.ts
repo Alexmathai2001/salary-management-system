@@ -68,3 +68,16 @@ export function minorToInput(minor: number, currency: string): string {
   const digits = fractionDigits(currency);
   return (minor / 10 ** digits).toFixed(digits);
 }
+
+/** Percentage change from one salary to the next, one decimal place; null when there is no previous salary. */
+export function percentChange(oldMinor: number | null, newMinor: number): number | null {
+  if (oldMinor === null || oldMinor === 0) {
+    return null;
+  }
+  return Math.round(((newMinor - oldMinor) / oldMinor) * 1000) / 10;
+}
+
+/** Today as an ISO date in UTC (the backend dates everything in UTC). */
+export function todayIso(): string {
+  return new Date().toISOString().slice(0, 10);
+}

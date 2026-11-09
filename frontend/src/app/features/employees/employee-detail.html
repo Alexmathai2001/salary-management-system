@@ -1,0 +1,99 @@
+<section class="page">
+  <a routerLink="/employees" class="back">← All employees</a>
+
+  @switch (state().status) {
+    @case ('error') {
+      <div class="error-banner" role="alert">{{ $any(state()).message }}</div>
+    }
+    @case ('loading') {
+      <mat-progress-bar mode="indeterminate" aria-label="Loading employee" />
+    }
+    @default {
+      @if (ready(); as r) {
+        @let e = r.employee;
+        <div class="page-header">
+          <div>
+            <h1>{{ e.firstName }} {{ e.lastName }}</h1>
+            <p>
+              {{ e.jobTitle }} · {{ e.department }} ·
+              <span class="muted">{{ e.employeeCode }}</span>
+              <span class="chip" [class.inactive]="e.status === 'INACTIVE'">
+                {{ e.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+              </span>
+            </p>
+          </div>
+          <div class="actions">
+            <a mat-stroked-button [routerLink]="['/employees', e.id, 'edit']">Edit details</a>
+            @if (e.status === 'ACTIVE') {
+              <button mat-stroked-button type="button" (click)="deactivate(e)">Deactivate</button>
+              <button mat-flat-button type="button" (click)="changeSalary(e)">Change salary</button>
+            } @else {
+              <button mat-flat-button type="button" (click)="reactivate(e)">Reactivate</button>
+            }
+          </div>
+        </div>
+
+        @if (actionError()) {
+          <div class="error-banner" role="alert">{{ actionError() }}</div>
+        }
+
+        <div class="grid">
+          <div class="card salary">
+            <span class="label muted">Current annual salary</span>
+            <span class="amount">{{ formatMinor(e.salaryMinor, e.currency) }}</span>
+            <span class="muted">{{ e.currency }}</span>
+          </div>
+
+          <div class="card facts">
+            <dl>
+              <div><dt>Email</dt><dd>{{ e.email }}</dd></div>
+              <div><dt>Country</dt><dd>{{ countryName(e.country) }}</dd></div>
+              <div><dt>Level</dt><dd>{{ e.jobLevel }}</dd></div>
+              <div><dt>Hired</dt><dd>{{ e.hireDate }}</dd></div>
+            </dl>
+          </div>
+        </div>
+
+        <div class="card history">
+          <h2>Salary history</h2>
+          <table mat-table [dataSource]="r.history" aria-label="Salary history">
+            <ng-container matColumnDef="effectiveDate">
+              <th mat-header-cell *matHeaderCellDef>Effective</th>
+              <td mat-cell *matCellDef="let h">{{ h.effectiveDate }}</td>
+            </ng-container>
+            <ng-container matColumnDef="change">
+              <th mat-header-cell *matHeaderCellDef class="num">Salary</th>
+              <td mat-cell *matCellDef="let h" class="num">
+                @if (h.oldSalaryMinor !== null) {
+                  <span class="muted">{{ formatMinor(h.oldSalaryMinor, h.currency) }} →</span>
+                }
+                {{ formatMinor(h.newSalaryMinor, h.currency) }}
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="pct">
+              <th mat-header-cell *matHeaderCellDef class="num">Change</th>
+              <td mat-cell *matCellDef="let h" class="num">
+                @let pct = percentChange(h.oldSalaryMinor, h.newSalaryMinor);
+                @if (pct !== null) {
+                  <span [class.up]="pct > 0" [class.down]="pct < 0">{{ pct > 0 ? '+' : '' }}{{ pct }}%</span>
+                } @else {
+                  <span class="muted">Starting salary</span>
+                }
+              </td>
+            </ng-container>
+            <ng-container matColumnDef="reason">
+              <th mat-header-cell *matHeaderCellDef>Reason</th>
+              <td mat-cell *matCellDef="let h">{{ h.reason || '—' }}</td>
+            </ng-container>
+            <ng-container matColumnDef="recorded">
+              <th mat-header-cell *matHeaderCellDef>Recorded</th>
+              <td mat-cell *matCellDef="let h" class="muted">{{ h.changedAt.slice(0, 10) }}</td>
+            </ng-container>
+            <tr mat-header-row *matHeaderRowDef="columns"></tr>
+            <tr mat-row *matRowDef="let row; columns: columns"></tr>
+          </table>
+        </div>
+      }
+    }
+  }
+</section>

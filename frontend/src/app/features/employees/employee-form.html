@@ -1,0 +1,129 @@
+<section class="page narrow">
+  <a routerLink="/employees" class="back">← All employees</a>
+
+  <div class="page-header">
+    <div>
+      <h1>{{ editing() ? 'Edit employee' : 'Add employee' }}</h1>
+      <p>
+        @if (editing()) {
+          Salary changes are made from the employee page so each one is recorded in the salary history.
+        } @else {
+          The starting salary is recorded as the first entry in their salary history.
+        }
+      </p>
+    </div>
+  </div>
+
+  @if (loading()) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading employee" />
+  }
+
+  <form class="card form" [formGroup]="form" (ngSubmit)="save()" novalidate>
+    <div class="row">
+      <mat-form-field>
+        <mat-label>First name</mat-label>
+        <input matInput formControlName="firstName" autocomplete="off" />
+        @if (form.controls.firstName.errors?.['required']) { <mat-error>Required</mat-error> }
+        @if (form.controls.firstName.errors?.['maxlength']) { <mat-error>At most 100 characters</mat-error> }
+      </mat-form-field>
+      <mat-form-field>
+        <mat-label>Last name</mat-label>
+        <input matInput formControlName="lastName" autocomplete="off" />
+        @if (form.controls.lastName.errors?.['required']) { <mat-error>Required</mat-error> }
+        @if (form.controls.lastName.errors?.['maxlength']) { <mat-error>At most 100 characters</mat-error> }
+      </mat-form-field>
+    </div>
+
+    <mat-form-field>
+      <mat-label>Work email</mat-label>
+      <input matInput type="email" formControlName="email" autocomplete="off" />
+      @if (form.controls.email.errors?.['required']) { <mat-error>Required</mat-error> }
+      @else if (form.controls.email.errors?.['email']) { <mat-error>Enter a valid email address</mat-error> }
+      @else if (form.controls.email.errors?.['server']) { <mat-error>{{ form.controls.email.errors?.['server'] }}</mat-error> }
+    </mat-form-field>
+
+    <div class="row">
+      <mat-form-field>
+        <mat-label>Country code</mat-label>
+        <input matInput formControlName="country" maxlength="2" autocomplete="off" list="countries" class="upper" />
+        <datalist id="countries">
+          @for (c of options()?.countries ?? []; track c) {
+            <option [value]="c">{{ countryName(c) }}</option>
+          }
+        </datalist>
+        <mat-hint>{{ countryPreview() || 'Two letters, e.g. IN, US, DE' }}</mat-hint>
+        @if (form.controls.country.errors?.['required']) { <mat-error>Required</mat-error> }
+        @else if (form.controls.country.errors?.['pattern']) { <mat-error>Use a two-letter ISO code, e.g. IN</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Hire date</mat-label>
+        <input matInput type="date" formControlName="hireDate" [max]="today" />
+        @if (form.controls.hireDate.errors?.['required']) { <mat-error>Required</mat-error> }
+        @if (form.controls.hireDate.errors?.['future']) { <mat-error>Cannot be in the future</mat-error> }
+      </mat-form-field>
+    </div>
+
+    <div class="row">
+      <mat-form-field>
+        <mat-label>Department</mat-label>
+        <input matInput formControlName="department" autocomplete="off" list="departments" />
+        <datalist id="departments">
+          @for (d of options()?.departments ?? []; track d) { <option [value]="d"></option> }
+        </datalist>
+        @if (form.controls.department.errors?.['required']) { <mat-error>Required</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field>
+        <mat-label>Job title</mat-label>
+        <input matInput formControlName="jobTitle" autocomplete="off" list="titles" />
+        <datalist id="titles">
+          @for (t of options()?.jobTitles ?? []; track t) { <option [value]="t"></option> }
+        </datalist>
+        @if (form.controls.jobTitle.errors?.['required']) { <mat-error>Required</mat-error> }
+      </mat-form-field>
+
+      <mat-form-field class="level">
+        <mat-label>Level</mat-label>
+        <input matInput formControlName="jobLevel" autocomplete="off" list="levels" />
+        <datalist id="levels">
+          @for (l of options()?.jobLevels ?? []; track l) { <option [value]="l"></option> }
+        </datalist>
+        @if (form.controls.jobLevel.errors?.['required']) { <mat-error>Required</mat-error> }
+      </mat-form-field>
+    </div>
+
+    @if (!editing()) {
+      <div class="row">
+        <mat-form-field>
+          <mat-label>Currency</mat-label>
+          <mat-select formControlName="currency">
+            @for (r of rates(); track r.currency) {
+              <mat-option [value]="r.currency">{{ r.currency }}</mat-option>
+            }
+          </mat-select>
+          <mat-hint>Only currencies with an FX rate can be used</mat-hint>
+          @if (form.controls.currency.errors?.['required']) { <mat-error>Choose a currency</mat-error> }
+        </mat-form-field>
+
+        <mat-form-field>
+          <mat-label>Annual salary</mat-label>
+          <input matInput formControlName="salary" inputmode="decimal" autocomplete="off" />
+          @if (form.controls.salary.errors?.['server']) { <mat-error>{{ form.controls.salary.errors?.['server'] }}</mat-error> }
+          @else if (form.controls.salary.errors) { <mat-error>{{ salaryError() }}</mat-error> }
+        </mat-form-field>
+      </div>
+    }
+
+    @if (error()) {
+      <div class="error-banner" role="alert">{{ error() }}</div>
+    }
+
+    <div class="buttons">
+      <a mat-button routerLink="/employees">Cancel</a>
+      <button mat-flat-button type="submit" [disabled]="saving() || loading()">
+        {{ saving() ? 'Saving…' : editing() ? 'Save changes' : 'Add employee' }}
+      </button>
+    </div>
+  </form>
+</section>

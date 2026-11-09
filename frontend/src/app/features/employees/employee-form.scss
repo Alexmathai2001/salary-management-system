@@ -1,0 +1,40 @@
+.narrow {
+  max-width: 760px;
+}
+
+.back {
+  text-decoration: none;
+  font-weight: 500;
+  width: fit-content;
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.row {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+
+  mat-form-field {
+    flex: 1 1 200px;
+  }
+
+  .level {
+    flex: 0 1 120px;
+  }
+}
+
+.upper {
+  text-transform: uppercase;
+}
+
+.buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}

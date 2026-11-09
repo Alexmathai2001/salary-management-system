@@ -5,6 +5,8 @@ import {
   fractionDigits,
   minorToInput,
   parseMajorToMinor,
+  percentChange,
+  todayIso,
 } from './money';
 
 describe('money', () => {
@@ -92,6 +94,25 @@ describe('money', () => {
     it('pads to the currency\'s decimals', () => {
       expect(minorToInput(8_500_000, 'USD')).toBe('85000.00');
       expect(minorToInput(5_000_000, 'JPY')).toBe('5000000');
+    });
+  });
+
+  describe('percentChange', () => {
+    it('reports raises and cuts to one decimal', () => {
+      expect(percentChange(2_000_000, 2_400_000)).toBe(20);
+      expect(percentChange(2_000_000, 2_150_000)).toBe(7.5);
+      expect(percentChange(2_000_000, 1_900_000)).toBe(-5);
+    });
+
+    it('is null when there is no previous salary', () => {
+      expect(percentChange(null, 2_000_000)).toBeNull();
+      expect(percentChange(0, 2_000_000)).toBeNull();
+    });
+  });
+
+  describe('todayIso', () => {
+    it('is an ISO date', () => {
+      expect(todayIso()).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     });
   });
 });
