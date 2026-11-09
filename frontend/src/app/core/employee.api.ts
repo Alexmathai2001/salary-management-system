@@ -21,6 +21,13 @@ export class EmployeeApi {
     return this.http.get<PageResponse<Employee>>(this.base, { params: toParams(query) });
   }
 
+  /** Download URL for the CSV of everything matching the filters (paging does not apply to an export). */
+  exportUrl(query: EmployeeQuery): string {
+    const { page: _page, size: _size, ...filters } = query;
+    const qs = toParams(filters).toString();
+    return `${this.base}/export.csv${qs ? '?' + qs : ''}`;
+  }
+
   get(id: number): Observable<Employee> {
     return this.http.get<Employee>(`${this.base}/${id}`);
   }

@@ -21,11 +21,32 @@ The seed is deterministic: the same options always produce the same data.
 
 The database file defaults to `backend/data/salary.db`. Override it with `SPRING_DATASOURCE_URL`.
 
+## Frontend (Angular 21, Angular Material)
+
+```bash
+cd frontend
+npm install
+
+# dev server on http://localhost:4200, proxying /api to the backend on :8080
+npm start
+
+# if something else already uses :8080, run the backend elsewhere (e.g. --server.port=8081) and point the proxy at it
+API_TARGET=http://localhost:8081 npm start
+
+npm test          # unit and component tests (Vitest)
+npm run build     # production build in frontend/dist
+```
+
+Screens: **Employees** (search, filter, sort, page, add/edit, salary change with history, deactivate, CSV export),
+**Insights** (headline figures, median pay by country/department/level/title, salary distribution, highest and lowest paid),
+**Pay outliers** and **FX rates**.
+
 ### API
 
 | Method | Path | Purpose |
 |--------|------|---------|
 | GET | `/api/employees` | Search, filter, sort, paginate (`q`, `country`, `department`, `jobTitle`, `jobLevel`, `status`, `page`, `size`, `sort`, `direction`) |
+| GET | `/api/employees/export.csv` | CSV of everything matching the same filters (Excel-safe) |
 | GET | `/api/employees/{id}` | One employee |
 | GET | `/api/employees/{id}/salary-history` | Salary changes, newest first |
 | POST | `/api/employees` | Create (records the initial salary) |

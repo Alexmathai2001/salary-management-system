@@ -226,6 +226,23 @@ describe('EmployeeList', () => {
     req.flush(page([]));
   });
 
+  it('offers a CSV export of exactly what is being shown, without paging', async () => {
+    flushLookups();
+    listRequest().flush(page([employee()]));
+    await settle();
+    const link = () => (fixture.nativeElement as HTMLElement).querySelector<HTMLAnchorElement>('a[download]')!;
+    expect(link().textContent).toContain('Export CSV');
+    expect(link().getAttribute('href')).toContain('/api/employees/export.csv?');
+    expect(link().getAttribute('href')).toContain('status=ACTIVE');
+
+    fixture.componentInstance['setFilter']('country', 'IN');
+    listRequest().flush(page([]));
+    await settle();
+
+    expect(link().getAttribute('href')).toContain('country=IN');
+    expect(link().getAttribute('href')).not.toContain('page=');
+  });
+
   it('opens the employee page when a row is chosen', async () => {
     flushLookups();
     listRequest().flush(page([employee({ id: 42 })]));

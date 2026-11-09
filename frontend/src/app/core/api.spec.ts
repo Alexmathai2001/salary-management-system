@@ -26,6 +26,20 @@ describe('API services', () => {
     req.flush({ content: [], page: 0, size: 25, totalElements: 0, totalPages: 0 });
   });
 
+  it('builds an export link from the filters but never includes paging', () => {
+    const api = TestBed.inject(EmployeeApi);
+
+    const url = api.exportUrl({ country: 'IN', status: 'ACTIVE', q: 'rao', sort: 'name', direction: 'asc', page: 3, size: 50 });
+
+    expect(url.startsWith('/api/employees/export.csv?')).toBe(true);
+    expect(url).toContain('country=IN');
+    expect(url).toContain('status=ACTIVE');
+    expect(url).toContain('q=rao');
+    expect(url).not.toContain('page=');
+    expect(url).not.toContain('size=');
+    expect(api.exportUrl({ page: 0, size: 25 })).toBe('/api/employees/export.csv');
+  });
+
   it('changes a salary with POST to the dedicated endpoint', () => {
     TestBed.inject(EmployeeApi)
       .changeSalary(7, { newSalaryMinor: 2_400_000, effectiveDate: '2025-04-01', reason: 'Promotion' })

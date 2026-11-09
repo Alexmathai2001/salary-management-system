@@ -4,7 +4,10 @@
       <h1>Employees</h1>
       <p>Search, filter and open any employee to see or change their salary.</p>
     </div>
-    <a mat-flat-button routerLink="/employees/new">Add employee</a>
+    <div class="header-actions">
+      <a mat-stroked-button [href]="exportUrl()" download>Export CSV</a>
+      <a mat-flat-button routerLink="/employees/new">Add employee</a>
+    </div>
   </div>
 
   <div class="card filters" role="search">

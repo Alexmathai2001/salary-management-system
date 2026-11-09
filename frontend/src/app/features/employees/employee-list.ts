@@ -85,6 +85,9 @@ export class EmployeeList {
     { initialValue: { status: 'loading' } as ListState },
   );
 
+  /** The CSV matches whatever the table is showing, minus paging. */
+  protected readonly exportUrl = computed(() => this.api.exportUrl(this.query()));
+
   protected readonly hasFilters = computed(() => {
     const q = this.query();
     return !!(q.q || q.country || q.department || q.jobTitle || q.jobLevel) || q.status !== 'ACTIVE';
