@@ -78,7 +78,12 @@ class EmployeeControllerWriteTest {
                 .replace("asha@acme.test", "not-an-email");
 
         mvc.perform(post("/api/employees").contentType(APPLICATION_JSON).content(invalid))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isBadRequest())
+                .andExpect(jsonPath("$.detail").value("Validation failed"))
+                .andExpect(jsonPath("$.errors.salaryMinor").value("must be greater than zero"))
+                .andExpect(jsonPath("$.errors.country").exists())
+                .andExpect(jsonPath("$.errors.email").exists())
+                .andExpect(jsonPath("$.errors.firstName").doesNotExist());
     }
 
     @Test
