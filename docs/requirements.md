@@ -28,7 +28,7 @@ Single persona: HR Manager, with full access. Questions the product must answer:
 | F4 | **Multi-country, multi-currency**: each salary is stored in its local currency, and reports convert to a single reporting currency (USD) using a fixed rate table | Needed because employees span countries |
 | F5 | **Insights dashboard**: headline totals, salary stats by country / department / level, distribution histogram, top and bottom earners | The "how do we pay people" answer |
 | F6 | **Outlier / pay-equity view**: employees far from the median of their role + level + country group | Robust median/MAD rule with a minimum percentage gap. Originally a ±2 standard deviation rule; changed after finding it cannot flag anyone in small groups |
-| F7 | **CSV import and export** | Bridges the Excel past: one-time bulk load, and export of filtered results |
+| F7 | **CSV export** of the filtered employee list | Lets HR keep using Excel for ad-hoc sharing; cheap and safe (read-only) |
 | F8 | **Seed script**: 10,000 realistic, deterministic employees (fixed random seed) | Also used by tests and the demo |
 
 ## 4. Deliberately left out (and why)
@@ -39,6 +39,7 @@ Single persona: HR Manager, with full access. Questions the product must answer:
 | Payroll processing (tax, deductions, payslips, payments) | Different product with heavy legal and country-specific complexity. We manage salary *data*, not pay runs. |
 | Bonuses, equity, benefits (total compensation) | Doubles the data model. The base-salary model is built so components can be added later. |
 | Live FX rates | A fixed, editable rate table keeps reports deterministic and testable. Live rates add an external dependency for little benefit here. |
+| CSV import | A one-off migration, not a daily workflow, and the most validation-heavy feature (parsing, per-row errors, duplicates, currency checks). The seed script covers the initial load and the validated API/UI covers data entry. First candidate to add if real Excel data must be migrated. |
 | Approval workflows for raises | Valuable at scale, but the HR Manager is the sole user and approver. |
 | Performance reviews / compensation planning cycles | Adjacent product area. |
 | Mobile-first UI and i18n | The HR Manager works on a desktop. The UI is English-only. |
@@ -58,6 +59,6 @@ Single persona: HR Manager, with full access. Questions the product must answer:
 - Salaries are annual.
 
 ## 7. Risks and open questions
-- **Real data quality** (messy Excel exports): mitigated by strict CSV validation with a per-row error report.
+- **Real data quality** (messy Excel exports): CSV import is out of scope (see section 4), so the initial load is the seed script and data entry goes through validated forms and APIs.
 - **Outlier rule is simplistic:** may flag legitimate pay differences, so it is presented as "worth reviewing", not "wrong".
 - Should the pay bands per level be defined by HR (a later feature), or derived from the data (v1)? **v1 assumes derived.**
