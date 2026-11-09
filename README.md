@@ -39,6 +39,7 @@ The database file defaults to `backend/data/salary.db`. Override it with `SPRING
 | GET | `/api/insights/summary` | Headcount, total, average, median, p25/p75, min/max pay in USD |
 | GET | `/api/insights/by/{dimension}` | The same stats per `country`, `department`, `jobLevel` or `jobTitle` |
 | GET | `/api/insights/distribution` | Salary histogram (`bucketUsd`, default 20000) |
+| GET | `/api/insights/outliers` | Employees paid far from peers (same title, level, country) |
 | GET | `/api/insights/earners` | Top or bottom paid (`order=top\|bottom`, `limit`) |
 
 Insight endpoints accept the drill-down filters `country`, `department`, `jobLevel`, `jobTitle` and `includeInactive`

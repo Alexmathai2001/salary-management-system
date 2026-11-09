@@ -27,7 +27,7 @@ Single persona: HR Manager, with full access. Questions the product must answer:
 | F3 | **Salary update with history**: every change records old and new value, effective date and reason | Answers "how has pay changed?" and gives an audit trail |
 | F4 | **Multi-country, multi-currency**: each salary is stored in its local currency, and reports convert to a single reporting currency (USD) using a fixed rate table | Needed because employees span countries |
 | F5 | **Insights dashboard**: headline totals, salary stats by country / department / level, distribution histogram, top and bottom earners | The "how do we pay people" answer |
-| F6 | **Outlier / pay-equity view**: employees far from the median of their role + level + country group | Simple statistical rule (e.g. outside ±2 standard deviations) |
+| F6 | **Outlier / pay-equity view**: employees far from the median of their role + level + country group | Robust median/MAD rule with a minimum percentage gap. Originally a ±2 standard deviation rule; changed after finding it cannot flag anyone in small groups |
 | F7 | **CSV import and export** | Bridges the Excel past: one-time bulk load, and export of filtered results |
 | F8 | **Seed script**: 10,000 realistic, deterministic employees (fixed random seed) | Also used by tests and the demo |
 
