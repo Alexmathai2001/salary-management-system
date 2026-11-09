@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { forkJoin, map, shareReplay } from 'rxjs';
+import { Observable, catchError, defer, forkJoin, map, of, shareReplay, tap } from 'rxjs';
 import { InsightsApi } from './insights.api';
 import { PayStats } from './models';
 
@@ -21,30 +21,42 @@ export function countryName(code: string): string {
   }
 }
 
+export const NO_OPTIONS: LookupOptions = { countries: [], departments: [], jobLevels: [], jobTitles: [] };
+
 /**
  * Values for filter dropdowns, derived from the data itself via the insights endpoints (inactive employees included),
  * so the UI never offers a department or country that does not exist and needs no hard-coded lists.
+ *
+ * Dropdowns are a convenience, so a failed lookup must never break the page that uses them: it yields empty options
+ * instead of an error, and the failure is not cached, so the next page that asks tries again.
  */
 @Injectable({ providedIn: 'root' })
 export class Lookups {
   private readonly insights = inject(InsightsApi);
+  private cached$: Observable<LookupOptions> | null = null;
 
-  readonly options$ = forkJoin({
-    countries: this.insights.by('country', { includeInactive: true }),
-    departments: this.insights.by('department', { includeInactive: true }),
-    jobLevels: this.insights.by('jobLevel', { includeInactive: true }),
-    jobTitles: this.insights.by('jobTitle', { includeInactive: true }),
-  }).pipe(
-    map(
-      (r): LookupOptions => ({
-        countries: keys(r.countries).sort((a, b) => countryName(a).localeCompare(countryName(b))),
-        departments: keys(r.departments),
-        jobLevels: keys(r.jobLevels),
-        jobTitles: keys(r.jobTitles),
-      }),
-    ),
-    shareReplay({ bufferSize: 1, refCount: false }),
-  );
+  readonly options$: Observable<LookupOptions> = defer(() => this.load()).pipe(catchError(() => of(NO_OPTIONS)));
+
+  private load(): Observable<LookupOptions> {
+    this.cached$ ??= forkJoin({
+      countries: this.insights.by('country', { includeInactive: true }),
+      departments: this.insights.by('department', { includeInactive: true }),
+      jobLevels: this.insights.by('jobLevel', { includeInactive: true }),
+      jobTitles: this.insights.by('jobTitle', { includeInactive: true }),
+    }).pipe(
+      map(
+        (r): LookupOptions => ({
+          countries: keys(r.countries).sort((a, b) => countryName(a).localeCompare(countryName(b))),
+          departments: keys(r.departments),
+          jobLevels: keys(r.jobLevels),
+          jobTitles: keys(r.jobTitles),
+        }),
+      ),
+      tap({ error: () => (this.cached$ = null) }),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
+    return this.cached$;
+  }
 }
 
 function keys(stats: PayStats[]): string[] {

@@ -1,0 +1,224 @@
+<section class="page">
+  <div class="page-header">
+    <div>
+      <h1>Pay insights</h1>
+      <p>
+        How the organisation pays people. Amounts are annual and converted to USD using the
+        <a routerLink="/fx-rates">FX rates</a>.
+      </p>
+    </div>
+  </div>
+
+  <div class="card filters" role="search" aria-label="Scope of the insights">
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Country</mat-label>
+      <mat-select [value]="filter().country ?? ''" (selectionChange)="setFilter('country', $event.value)">
+        <mat-option value="">All countries</mat-option>
+        @for (c of options()?.countries ?? []; track c) {
+          <mat-option [value]="c">{{ countryName(c) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Department</mat-label>
+      <mat-select [value]="filter().department ?? ''" (selectionChange)="setFilter('department', $event.value)">
+        <mat-option value="">All departments</mat-option>
+        @for (d of options()?.departments ?? []; track d) {
+          <mat-option [value]="d">{{ d }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="narrow" subscriptSizing="dynamic">
+      <mat-label>Level</mat-label>
+      <mat-select [value]="filter().jobLevel ?? ''" (selectionChange)="setFilter('jobLevel', $event.value)">
+        <mat-option value="">All</mat-option>
+        @for (l of options()?.jobLevels ?? []; track l) {
+          <mat-option [value]="l">{{ l }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-checkbox [checked]="!!filter().includeInactive" (change)="setIncludeInactive($event.checked)">
+      Include inactive employees
+    </mat-checkbox>
+
+    @if (hasFilters()) {
+      <button mat-button type="button" (click)="clear()">Clear filters</button>
+    }
+  </div>
+
+  @if (state().error) {
+    <div class="error-banner" role="alert">
+      Could not load insights. {{ state().error }}
+      <button mat-button type="button" (click)="retry()">Try again</button>
+    </div>
+  }
+
+  @if (data(); as d) {
+    @if (state().loading) {
+      <mat-progress-bar mode="indeterminate" aria-label="Refreshing insights" />
+    }
+
+    @if (d.summary.headcount === 0) {
+      <div class="card empty">
+        <strong>No employees match these filters.</strong>
+        <span class="muted">Try widening the scope, or include inactive employees.</span>
+      </div>
+    } @else {
+      <div class="content" [class.stale]="state().loading" [attr.aria-busy]="state().loading">
+        <div class="tiles">
+          <div class="card tile">
+            <span class="tile-label">Employees</span>
+            <span class="tile-value">{{ d.summary.headcount.toLocaleString('en') }}</span>
+          </div>
+          <div class="card tile">
+            <span class="tile-label">Median annual pay</span>
+            <span class="tile-value">{{ formatUsdCents(d.summary.medianCents) }}</span>
+            <span class="tile-sub muted">Average {{ formatUsdCents(d.summary.avgCents) }}</span>
+          </div>
+          <div class="card tile">
+            <span class="tile-label">Middle 50% earn</span>
+            <span class="tile-value range">
+              {{ formatUsdCompact(d.summary.p25Cents) }} to {{ formatUsdCompact(d.summary.p75Cents) }}
+            </span>
+            <span class="tile-sub muted">
+              Lowest {{ formatUsdCompact(d.summary.minCents) }}, highest {{ formatUsdCompact(d.summary.maxCents) }}
+            </span>
+          </div>
+          <div class="card tile">
+            <span class="tile-label">Total annual payroll</span>
+            <span class="tile-value">{{ formatUsdCompact(d.summary.totalCents) }}</span>
+          </div>
+        </div>
+
+        <div class="card chart-card">
+          <div class="card-head">
+            <div>
+              <h2>Median annual pay by {{ dimensionNoun() }}</h2>
+              <p class="muted">Bars show the median. Hover or focus a bar for the middle 50%, average and range.</p>
+            </div>
+            <div class="toggles">
+              <mat-button-toggle-group
+                aria-label="Group by"
+                [value]="dimension()"
+                (change)="dimension.set($event.value)"
+                hideSingleSelectionIndicator
+              >
+                @for (dim of dimensions; track dim.value) {
+                  <mat-button-toggle [value]="dim.value">{{ dim.label }}</mat-button-toggle>
+                }
+              </mat-button-toggle-group>
+              <mat-button-toggle-group
+                aria-label="View"
+                [value]="view()"
+                (change)="view.set($event.value)"
+                hideSingleSelectionIndicator
+              >
+                <mat-button-toggle value="chart">Chart</mat-button-toggle>
+                <mat-button-toggle value="table">Table</mat-button-toggle>
+              </mat-button-toggle-group>
+            </div>
+          </div>
+
+          @if (view() === 'chart') {
+            <app-ranked-bars
+              [data]="bars()"
+              [formatValue]="usd"
+              [formatTick]="usdCompact"
+              [ariaLabel]="'Median annual pay in USD by ' + dimensionNoun()"
+            />
+          } @else {
+            <div class="table-scroll">
+              <table class="data">
+                <caption class="sr-only">Pay statistics by {{ dimensionNoun() }}, in USD</caption>
+                <thead>
+                  <tr>
+                    <th scope="col">{{ dimensionNoun() }}</th>
+                    <th scope="col" class="num">Employees</th>
+                    <th scope="col" class="num">Median</th>
+                    <th scope="col" class="num">Average</th>
+                    <th scope="col" class="num">Middle 50%</th>
+                    <th scope="col" class="num">Lowest</th>
+                    <th scope="col" class="num">Highest</th>
+                    <th scope="col" class="num">Total payroll</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (g of d.groups; track g.key) {
+                    <tr>
+                      <th scope="row">{{ groupLabel(g.key) }}</th>
+                      <td class="num">{{ g.headcount.toLocaleString('en') }}</td>
+                      <td class="num">{{ formatUsdCents(g.medianCents) }}</td>
+                      <td class="num">{{ formatUsdCents(g.avgCents) }}</td>
+                      <td class="num">{{ formatUsdCents(g.p25Cents) }} to {{ formatUsdCents(g.p75Cents) }}</td>
+                      <td class="num">{{ formatUsdCents(g.minCents) }}</td>
+                      <td class="num">{{ formatUsdCents(g.maxCents) }}</td>
+                      <td class="num">{{ formatUsdCompact(g.totalCents) }}</td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          }
+        </div>
+
+        <div class="card chart-card">
+          <div class="card-head">
+            <div>
+              <h2>Salary distribution</h2>
+              <p class="muted">Number of employees in each annual pay band, in USD.</p>
+            </div>
+            <mat-form-field class="band" subscriptSizing="dynamic">
+              <mat-label>Band width</mat-label>
+              <mat-select [value]="bucket()" (selectionChange)="bucket.set($event.value)">
+                @for (size of bucketSizes; track size) {
+                  <mat-option [value]="size">{{ formatUsdCompact(size * 100) }}</mat-option>
+                }
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <app-histogram
+            [buckets]="d.distribution"
+            [formatUsd]="usdCompact"
+            ariaLabel="Number of employees by annual pay band in USD"
+          />
+        </div>
+
+        <div class="earners">
+          @for (list of [{ title: 'Highest paid', rows: d.top }, { title: 'Lowest paid', rows: d.bottom }]; track list.title) {
+            <div class="card">
+              <h2>{{ list.title }}</h2>
+              <div class="table-scroll">
+                <table class="data">
+                  <thead>
+                    <tr>
+                      <th scope="col">Employee</th>
+                      <th scope="col">Role</th>
+                      <th scope="col" class="num">USD equivalent</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    @for (e of list.rows; track e.id) {
+                      <tr>
+                        <th scope="row">
+                          <a [routerLink]="['/employees', e.id]">{{ e.name }}</a>
+                          <div class="muted small">{{ countryName(e.country) }}</div>
+                        </th>
+                        <td>{{ e.jobTitle }} <span class="muted">{{ e.jobLevel }}</span></td>
+                        <td class="num">{{ formatUsdCents(e.usdCents) }}</td>
+                      </tr>
+                    }
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    }
+  } @else if (state().loading) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading insights" />
+  }
+</section>
