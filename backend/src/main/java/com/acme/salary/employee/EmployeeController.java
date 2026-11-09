@@ -1,9 +1,16 @@
 package com.acme.salary.employee;
 
 import com.acme.salary.common.PageResponse;
+import jakarta.validation.Valid;
+import java.net.URI;
 import java.util.List;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -43,5 +50,32 @@ public class EmployeeController {
     @GetMapping("/{id}/salary-history")
     public List<SalaryHistoryResponse> salaryHistory(@PathVariable Long id) {
         return service.salaryHistory(id).stream().map(SalaryHistoryResponse::from).toList();
+    }
+
+    @PostMapping
+    public ResponseEntity<EmployeeResponse> create(@Valid @RequestBody CreateEmployeeRequest request) {
+        Employee created = service.create(request);
+        return ResponseEntity.created(URI.create("/api/employees/" + created.getId()))
+                .body(EmployeeResponse.from(created));
+    }
+
+    @PutMapping("/{id}")
+    public EmployeeResponse update(@PathVariable Long id, @Valid @RequestBody UpdateEmployeeRequest request) {
+        return EmployeeResponse.from(service.update(id, request));
+    }
+
+    @DeleteMapping("/{id}")
+    public EmployeeResponse deactivate(@PathVariable Long id) {
+        return EmployeeResponse.from(service.deactivate(id));
+    }
+
+    @PostMapping("/{id}/reactivate")
+    public EmployeeResponse reactivate(@PathVariable Long id) {
+        return EmployeeResponse.from(service.reactivate(id));
+    }
+
+    @PostMapping("/{id}/salary")
+    public EmployeeResponse changeSalary(@PathVariable Long id, @Valid @RequestBody ChangeSalaryRequest request) {
+        return EmployeeResponse.from(service.changeSalary(id, request));
     }
 }
