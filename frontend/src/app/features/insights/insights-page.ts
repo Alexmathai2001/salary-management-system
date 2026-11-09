@@ -7,12 +7,12 @@ import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatProgressBarModule } from '@angular/material/progress-bar';
 import { MatSelectModule } from '@angular/material/select';
 import { RouterLink } from '@angular/router';
-import { catchError, forkJoin, map, of, scan, startWith, switchMap } from 'rxjs';
-import { describeError } from '../../core/api-error';
+import { forkJoin, scan, switchMap } from 'rxjs';
 import { InsightsApi } from '../../core/insights.api';
 import { countryName, Lookups } from '../../core/lookups';
 import { Dimension, DistributionBucket, Earner, InsightsFilter, PayStats } from '../../core/models';
 import { formatUsdCents, formatUsdCompact } from '../../core/money';
+import { initialView, loadAsEvents, reduceView } from '../../core/view-state';
 import { BarDatum, RankedBars } from './charts/ranked-bars';
 import { Histogram } from './charts/histogram';
 
@@ -22,28 +22,6 @@ interface InsightsData {
   distribution: DistributionBucket[];
   top: Earner[];
   bottom: Earner[];
-}
-
-interface ViewState {
-  data: InsightsData | null;
-  loading: boolean;
-  error: string;
-}
-
-type Event = { type: 'loading' } | { type: 'ok'; data: InsightsData } | { type: 'error'; message: string };
-
-const INITIAL: ViewState = { data: null, loading: true, error: '' };
-
-/** Keeps the last good data across loading and error events so the page never blanks while refetching. */
-function reduce(prev: ViewState, e: Event): ViewState {
-  switch (e.type) {
-    case 'ok':
-      return { data: e.data, loading: false, error: '' };
-    case 'error':
-      return { ...prev, loading: false, error: e.message };
-    default:
-      return { ...prev, loading: true, error: '' };
-  }
 }
 
 const DIMENSIONS: { value: Dimension; label: string; noun: string }[] = [
@@ -88,21 +66,19 @@ export class InsightsPage {
   protected readonly state = toSignal(
     toObservable(computed(() => ({ filter: this.filter(), dimension: this.dimension(), bucket: this.bucket() }))).pipe(
       switchMap(({ filter, dimension, bucket }) =>
-        forkJoin({
-          summary: this.api.summary(filter),
-          groups: this.api.by(dimension, filter),
-          distribution: this.api.distribution(bucket, filter),
-          top: this.api.earners('top', 10, filter),
-          bottom: this.api.earners('bottom', 10, filter),
-        }).pipe(
-          map((data): Event => ({ type: 'ok', data })),
-          catchError((err) => of<Event>({ type: 'error', message: describeError(err).message })),
-          startWith<Event>({ type: 'loading' }),
+        loadAsEvents(
+          forkJoin({
+            summary: this.api.summary(filter),
+            groups: this.api.by(dimension, filter),
+            distribution: this.api.distribution(bucket, filter),
+            top: this.api.earners('top', 10, filter),
+            bottom: this.api.earners('bottom', 10, filter),
+          }),
         ),
       ),
-      scan(reduce, INITIAL),
+      scan(reduceView<InsightsData>, initialView<InsightsData>()),
     ),
-    { initialValue: INITIAL },
+    { initialValue: initialView<InsightsData>() },
   );
 
   protected readonly data = computed(() => this.state().data);

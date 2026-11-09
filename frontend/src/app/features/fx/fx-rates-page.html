@@ -1,0 +1,93 @@
+<section class="page narrow">
+  <div class="page-header">
+    <div>
+      <h1>FX rates</h1>
+      <p>
+        Salaries stay in each employee's own currency. These rates only convert them to USD for the insight pages, so
+        change a rate and every report follows. A currency needs a rate here before you can add employees paid in it.
+      </p>
+    </div>
+  </div>
+
+  @if (message()) {
+    <div class="card ok" role="status">{{ message() }}</div>
+  }
+
+  @if (state().error) {
+    <div class="error-banner" role="alert">Could not load rates. {{ state().error }}</div>
+  }
+
+  @if (state().loading && rates().length === 0) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading rates" />
+  }
+
+  @if (rates().length > 0) {
+    <div class="card table-card">
+      <table class="data">
+        <caption class="sr-only">Exchange rates against the US dollar</caption>
+        <thead>
+          <tr>
+            <th scope="col">Currency</th>
+            <th scope="col" class="rate-col">Units per 1 USD</th>
+            <th scope="col">Updated</th>
+            <th scope="col"><span class="sr-only">Save</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (r of rates(); track r.currency) {
+            <tr>
+              <th scope="row">
+                {{ r.currency }}
+                <div class="muted small">{{ currencyName(r.currency) }}</div>
+              </th>
+              <td class="rate-col">
+                @if (r.currency === 'USD') {
+                  <span class="muted">1 (reporting base)</span>
+                } @else {
+                  <mat-form-field subscriptSizing="dynamic" class="rate">
+                    <mat-label>Rate for {{ r.currency }}</mat-label>
+                    <input matInput inputmode="decimal" [formControl]="control(r)" (keydown.enter)="save(r)" />
+                  </mat-form-field>
+                  @if (rowError()[r.currency]) {
+                    <div class="field-error" role="alert">{{ rowError()[r.currency] }}</div>
+                  }
+                }
+              </td>
+              <td class="muted">{{ updated(r) }}</td>
+              <td>
+                @if (r.currency !== 'USD') {
+                  <button
+                    mat-stroked-button
+                    type="button"
+                    [disabled]="!changed(r) || saving() === r.currency"
+                    (click)="save(r)"
+                  >
+                    {{ saving() === r.currency ? 'Saving…' : 'Save' }}
+                  </button>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <form class="card add" (ngSubmit)="add()" novalidate>
+      <h2>Add a currency</h2>
+      <div class="add-row">
+        <mat-form-field subscriptSizing="dynamic" class="code">
+          <mat-label>Code</mat-label>
+          <input matInput maxlength="3" autocomplete="off" class="upper" [formControl]="newCode" />
+        </mat-form-field>
+        <mat-form-field subscriptSizing="dynamic">
+          <mat-label>Units per 1 USD</mat-label>
+          <input matInput inputmode="decimal" autocomplete="off" [formControl]="newRate" />
+        </mat-form-field>
+        <button mat-flat-button type="submit" [disabled]="saving() !== null">Add currency</button>
+      </div>
+      @if (addError()) {
+        <div class="error-banner" role="alert">{{ addError() }}</div>
+      }
+    </form>
+  }
+</section>

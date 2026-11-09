@@ -1,0 +1,171 @@
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 16px;
+  align-items: center;
+
+  mat-form-field {
+    width: 200px;
+  }
+
+  .narrow {
+    width: 130px;
+  }
+}
+
+mat-button-toggle-group {
+  --mat-button-toggle-height: 36px;
+}
+
+.tuning {
+  summary {
+    cursor: pointer;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .tuning-form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: flex-start;
+    margin-top: 16px;
+
+    mat-form-field {
+      width: 240px;
+    }
+  }
+
+  .tuning-actions {
+    display: flex;
+    gap: 8px;
+    padding-top: 6px;
+  }
+
+  .error-banner {
+    margin-top: 12px;
+  }
+}
+
+.chip {
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 500;
+  background: var(--mat-sys-secondary-container);
+  color: var(--mat-sys-on-secondary-container);
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  transition: opacity 150ms;
+
+  &.stale {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+}
+
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tile-label {
+  color: var(--mat-sys-on-surface-variant);
+  font: var(--mat-sys-label-large);
+}
+
+.tile-value {
+  font: var(--mat-sys-headline-medium);
+  font-weight: 500;
+}
+
+.tile-sub {
+  font: var(--mat-sys-body-small);
+}
+
+.table-card {
+  padding: 0;
+  overflow: hidden;
+}
+
+.table-scroll {
+  overflow-x: auto;
+}
+
+table.data {
+  width: 100%;
+  border-collapse: collapse;
+
+  th,
+  td {
+    padding: 10px 16px;
+    text-align: left;
+    border-bottom: 1px solid var(--mat-sys-outline-variant);
+    vertical-align: top;
+  }
+
+  thead th {
+    color: var(--mat-sys-on-surface-variant);
+    font: var(--mat-sys-label-large);
+    white-space: nowrap;
+  }
+
+  tbody th {
+    font-weight: 500;
+  }
+
+  .num {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+  }
+}
+
+.small {
+  font-size: 12px;
+  font-weight: 400;
+}
+
+/* direction is a label with text, never colour alone */
+.diff {
+  font-weight: 500;
+
+  &.above {
+    color: var(--mat-sys-primary);
+  }
+
+  &.below {
+    color: var(--mat-sys-error);
+  }
+}
+
+.empty {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 48px 16px;
+  text-align: center;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}

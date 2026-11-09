@@ -1,0 +1,173 @@
+<section class="page">
+  <div class="page-header">
+    <div>
+      <h1>Pay outliers</h1>
+      <p>
+        Employees paid far from people with the same job title, level and country. A flag means "worth a conversation",
+        not "wrong": there may be a good reason.
+      </p>
+    </div>
+  </div>
+
+  <div class="card filters" role="search" aria-label="Scope of the review">
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Country</mat-label>
+      <mat-select [value]="filter().country ?? ''" (selectionChange)="setFilter('country', $event.value)">
+        <mat-option value="">All countries</mat-option>
+        @for (c of options()?.countries ?? []; track c) {
+          <mat-option [value]="c">{{ countryName(c) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Department</mat-label>
+      <mat-select [value]="filter().department ?? ''" (selectionChange)="setFilter('department', $event.value)">
+        <mat-option value="">All departments</mat-option>
+        @for (d of options()?.departments ?? []; track d) {
+          <mat-option [value]="d">{{ d }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-button-toggle-group aria-label="Show" [value]="direction()" (change)="direction.set($event.value)" hideSingleSelectionIndicator>
+      <mat-button-toggle value="any">All</mat-button-toggle>
+      <mat-button-toggle value="high">Paid above peers</mat-button-toggle>
+      <mat-button-toggle value="low">Paid below peers</mat-button-toggle>
+    </mat-button-toggle-group>
+
+    <mat-form-field class="narrow" subscriptSizing="dynamic">
+      <mat-label>Show up to</mat-label>
+      <mat-select [value]="limit()" (selectionChange)="limit.set($event.value)">
+        @for (l of limits; track l) {
+          <mat-option [value]="l">{{ l }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+  </div>
+
+  <details class="card tuning">
+    <summary>
+      Sensitivity
+      @if (!isDefault()) {
+        <span class="chip">customised</span>
+      }
+    </summary>
+    <form (ngSubmit)="applyTuning()" class="tuning-form" novalidate>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Minimum peers in a group</mat-label>
+        <input matInput type="number" min="3" max="100" step="1" [formControl]="minGroupSize" />
+        <mat-hint>Smaller groups are not judged</mat-hint>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Statistical threshold</mat-label>
+        <input matInput type="number" min="1" max="10" step="0.1" [formControl]="zThreshold" />
+        <mat-hint>3.5 is the standard cut-off</mat-hint>
+      </mat-form-field>
+      <mat-form-field subscriptSizing="dynamic">
+        <mat-label>Minimum gap from peers (%)</mat-label>
+        <input matInput type="number" min="0" max="200" step="1" [formControl]="minDeviationPct" />
+        <mat-hint>Ignores differences smaller than this</mat-hint>
+      </mat-form-field>
+      <div class="tuning-actions">
+        <button mat-flat-button type="submit">Apply</button>
+        <button mat-button type="button" (click)="resetTuning()">Reset</button>
+      </div>
+    </form>
+    @if (tuningProblem()) {
+      <div class="error-banner" role="alert">{{ tuningProblem() }}</div>
+    }
+  </details>
+
+  @if (state().error) {
+    <div class="error-banner" role="alert">
+      Could not load the review. {{ state().error }}
+      <button mat-button type="button" (click)="retry()">Try again</button>
+    </div>
+  }
+
+  @if (report(); as r) {
+    @if (state().loading) {
+      <mat-progress-bar mode="indeterminate" aria-label="Refreshing" />
+    }
+
+    <div class="content" [class.stale]="state().loading" [attr.aria-busy]="state().loading">
+      <div class="tiles">
+        <div class="card tile">
+          <span class="tile-label">Flagged</span>
+          <span class="tile-value">{{ r.totalFlagged.toLocaleString('en') }}</span>
+          @if (r.totalFlagged > r.outliers.length) {
+            <span class="tile-sub muted">Showing the {{ r.outliers.length }} furthest from their peers</span>
+          }
+        </div>
+        <div class="card tile">
+          <span class="tile-label">Employees checked</span>
+          <span class="tile-value">{{ r.employeesEvaluated.toLocaleString('en') }}</span>
+          <span class="tile-sub muted">in {{ r.groupsEvaluated.toLocaleString('en') }} peer groups</span>
+        </div>
+        <div class="card tile">
+          <span class="tile-label">Not checked</span>
+          <span class="tile-value">{{ r.employeesNotEvaluated.toLocaleString('en') }}</span>
+          <span class="tile-sub muted">
+            peer group under {{ r.params.minGroupSize }} people ({{ 100 - coveragePct(r) }}%), too few to judge
+          </span>
+        </div>
+      </div>
+
+      @if (r.outliers.length === 0) {
+        <div class="card empty">
+          <strong>No one is flagged with these settings.</strong>
+          <span class="muted">
+            {{ r.employeesNotEvaluated > 0 && r.employeesEvaluated === 0
+              ? 'No peer group is large enough to judge. Lower the minimum group size.'
+              : 'Everyone checked is within the normal range of their peers.' }}
+          </span>
+        </div>
+      } @else {
+        <div class="card table-card">
+          <div class="table-scroll">
+            <table class="data">
+              <caption class="sr-only">Employees paid far from their peers</caption>
+              <thead>
+                <tr>
+                  <th scope="col">Employee</th>
+                  <th scope="col">Role</th>
+                  <th scope="col" class="num">Pay</th>
+                  <th scope="col" class="num">Peer median</th>
+                  <th scope="col" class="num">Difference</th>
+                  <th scope="col" class="num">Peers</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (o of r.outliers; track o.id) {
+                  <tr>
+                    <th scope="row">
+                      <a [routerLink]="['/employees', o.id]">{{ o.name }}</a>
+                      <div class="muted small">{{ o.employeeCode }} · {{ countryName(o.country) }}</div>
+                    </th>
+                    <td>{{ o.jobTitle }} <span class="muted">{{ o.jobLevel }}</span></td>
+                    <td class="num">
+                      {{ formatUsdCents(o.usdCents) }}
+                      @if (o.currency !== 'USD') {
+                        <div class="muted small">{{ formatMinor(o.salaryMinor, o.currency) }}</div>
+                      }
+                    </td>
+                    <td class="num">{{ formatUsdCents(o.peerMedianCents) }}</td>
+                    <td class="num">
+                      <span class="diff" [class.above]="o.direction === 'HIGH'" [class.below]="o.direction === 'LOW'">
+                        {{ o.direction === 'HIGH' ? 'Above' : 'Below' }} {{ sign(o.deviationPct) }}
+                      </span>
+                    </td>
+                    <td class="num">{{ o.peerCount }}</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      }
+    </div>
+  } @else if (state().loading) {
+    <mat-progress-bar mode="indeterminate" aria-label="Loading" />
+  }
+</section>

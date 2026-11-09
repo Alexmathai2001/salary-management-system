@@ -27,5 +27,15 @@ export const routes: Routes = [
     title: 'Pay insights · ACME Salary Management',
     loadComponent: () => import('./features/insights/insights-page').then((m) => m.InsightsPage),
   },
+  {
+    path: 'outliers',
+    title: 'Pay outliers · ACME Salary Management',
+    loadComponent: () => import('./features/outliers/outliers-page').then((m) => m.OutliersPage),
+  },
+  {
+    path: 'fx-rates',
+    title: 'FX rates · ACME Salary Management',
+    loadComponent: () => import('./features/fx/fx-rates-page').then((m) => m.FxRatesPage),
+  },
   { path: '**', redirectTo: 'employees' },
 ];
