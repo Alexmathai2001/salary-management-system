@@ -34,4 +34,14 @@ The database file defaults to `backend/data/salary.db`. Override it with `SPRING
 | DELETE | `/api/employees/{id}` | Deactivate (soft delete) |
 | POST | `/api/employees/{id}/reactivate` | Reactivate |
 
+| GET | `/api/fx-rates` | FX table used for reporting (units of currency per 1 USD) |
+| PUT | `/api/fx-rates/{currency}` | Create or update a rate. A currency needs a rate before employees can be created in it |
+| GET | `/api/insights/summary` | Headcount, total, average, median, p25/p75, min/max pay in USD |
+| GET | `/api/insights/by/{dimension}` | The same stats per `country`, `department`, `jobLevel` or `jobTitle` |
+| GET | `/api/insights/distribution` | Salary histogram (`bucketUsd`, default 20000) |
+| GET | `/api/insights/earners` | Top or bottom paid (`order=top\|bottom`, `limit`) |
+
+Insight endpoints accept the drill-down filters `country`, `department`, `jobLevel`, `jobTitle` and `includeInactive`
+(inactive employees are excluded by default). All insight money values are **USD cents**, converted with the FX table.
+
 Salaries are integers in minor units of the employee's currency (e.g. cents; JPY has none).

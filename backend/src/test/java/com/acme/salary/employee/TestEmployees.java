@@ -5,7 +5,7 @@ import java.time.LocalDateTime;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /** Test data builder so each test states only the fields it cares about. */
-final class TestEmployees {
+public final class TestEmployees {
 
     private static final AtomicInteger SEQ = new AtomicInteger();
 
@@ -29,52 +29,57 @@ final class TestEmployees {
         e.setUpdatedAt(LocalDateTime.of(2024, 1, 1, 9, 0));
     }
 
-    static TestEmployees anEmployee() {
+    public static TestEmployees anEmployee() {
         return new TestEmployees();
     }
 
-    TestEmployees name(String first, String last) {
+    public TestEmployees name(String first, String last) {
         e.setFirstName(first);
         e.setLastName(last);
         return this;
     }
 
-    TestEmployees email(String email) {
+    public TestEmployees email(String email) {
         e.setEmail(email);
         return this;
     }
 
-    TestEmployees country(String country) {
+    public TestEmployees country(String country) {
         e.setCountry(country);
         return this;
     }
 
-    TestEmployees department(String department) {
+    public TestEmployees department(String department) {
         e.setDepartment(department);
         return this;
     }
 
-    TestEmployees jobTitle(String jobTitle) {
+    public TestEmployees jobTitle(String jobTitle) {
         e.setJobTitle(jobTitle);
         return this;
     }
 
-    TestEmployees level(String level) {
+    public TestEmployees level(String level) {
         e.setJobLevel(level);
         return this;
     }
 
-    TestEmployees salary(long salaryMinor) {
+    public TestEmployees currency(String currency) {
+        e.setCurrency(currency);
+        return this;
+    }
+
+    public TestEmployees salary(long salaryMinor) {
         e.setSalaryMinor(salaryMinor);
         return this;
     }
 
-    TestEmployees status(EmployeeStatus status) {
+    public TestEmployees status(EmployeeStatus status) {
         e.setStatus(status);
         return this;
     }
 
-    Employee build() {
+    public Employee build() {
         return e;
     }
 }
