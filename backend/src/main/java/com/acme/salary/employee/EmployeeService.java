@@ -2,6 +2,7 @@ package com.acme.salary.employee;
 
 import com.acme.salary.common.ConflictException;
 import com.acme.salary.common.NotFoundException;
+import com.acme.salary.fx.FxRateRepository;
 import java.time.Clock;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
@@ -35,11 +36,14 @@ public class EmployeeService {
 
     private final EmployeeRepository employees;
     private final SalaryHistoryRepository history;
+    private final FxRateRepository fxRates;
     private final Clock clock;
 
-    public EmployeeService(EmployeeRepository employees, SalaryHistoryRepository history, Clock clock) {
+    public EmployeeService(EmployeeRepository employees, SalaryHistoryRepository history,
+            FxRateRepository fxRates, Clock clock) {
         this.employees = employees;
         this.history = history;
+        this.fxRates = fxRates;
         this.clock = clock;
     }
 
@@ -59,6 +63,11 @@ public class EmployeeService {
     @Transactional
     public Employee create(CreateEmployeeRequest r) {
         requireUniqueEmail(r.email(), null);
+        // Reports convert via the FX table, so an employee in an unknown currency would vanish from every report.
+        if (!fxRates.existsById(r.currency())) {
+            throw new IllegalArgumentException(
+                    "Unsupported currency " + r.currency() + ": add an FX rate for it first");
+        }
         LocalDateTime now = LocalDateTime.now(clock);
 
         Employee e = new Employee();

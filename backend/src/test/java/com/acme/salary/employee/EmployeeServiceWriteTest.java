@@ -25,10 +25,12 @@ class EmployeeServiceWriteTest {
 
     EmployeeRepository employees = mock(EmployeeRepository.class);
     SalaryHistoryRepository history = mock(SalaryHistoryRepository.class);
-    EmployeeService service = new EmployeeService(employees, history, CLOCK);
+    com.acme.salary.fx.FxRateRepository fxRates = mock(com.acme.salary.fx.FxRateRepository.class);
+    EmployeeService service = new EmployeeService(employees, history, fxRates, CLOCK);
 
     @BeforeEach
     void saveAssignsAnId() {
+        when(fxRates.existsById("INR")).thenReturn(true);
         when(employees.save(any(Employee.class))).thenAnswer(inv -> {
             Employee e = inv.getArgument(0);
             if (e.getId() == null) {
@@ -80,6 +82,17 @@ class EmployeeServiceWriteTest {
         assertThatThrownBy(() -> service.create(createRequest("asha@acme.test")))
                 .isInstanceOf(ConflictException.class)
                 .hasMessageContaining("already exists");
+        verify(employees, never()).save(any());
+    }
+
+    @Test
+    void createRejectsCurrencyWithoutAnFxRate() {
+        var chf = new CreateEmployeeRequest("Max", "Frei", "max@acme.test", "CH", "Sales", "Account Executive", "L3",
+                "CHF", 9_000_000L, LocalDate.of(2023, 2, 1));
+
+        assertThatThrownBy(() -> service.create(chf))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessageContaining("Unsupported currency CHF");
         verify(employees, never()).save(any());
     }
 
