@@ -1,0 +1,185 @@
+<section class="page">
+  <div class="page-header">
+    <div>
+      <h1>Employees</h1>
+      <p>Search, filter and open any employee to see or change their salary.</p>
+    </div>
+    <a mat-flat-button routerLink="/employees/new">Add employee</a>
+  </div>
+
+  <div class="card filters" role="search">
+    <mat-form-field class="grow" subscriptSizing="dynamic">
+      <mat-label>Search name, email or code</mat-label>
+      <input matInput [formControl]="search" autocomplete="off" />
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Country</mat-label>
+      <mat-select [value]="query().country ?? ''" (selectionChange)="setFilter('country', $event.value)">
+        <mat-option value="">All countries</mat-option>
+        @for (c of options()?.countries ?? []; track c) {
+          <mat-option [value]="c">{{ countryName(c) }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Department</mat-label>
+      <mat-select [value]="query().department ?? ''" (selectionChange)="setFilter('department', $event.value)">
+        <mat-option value="">All departments</mat-option>
+        @for (d of options()?.departments ?? []; track d) {
+          <mat-option [value]="d">{{ d }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field subscriptSizing="dynamic">
+      <mat-label>Job title</mat-label>
+      <mat-select [value]="query().jobTitle ?? ''" (selectionChange)="setFilter('jobTitle', $event.value)">
+        <mat-option value="">All titles</mat-option>
+        @for (t of options()?.jobTitles ?? []; track t) {
+          <mat-option [value]="t">{{ t }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="narrow" subscriptSizing="dynamic">
+      <mat-label>Level</mat-label>
+      <mat-select [value]="query().jobLevel ?? ''" (selectionChange)="setFilter('jobLevel', $event.value)">
+        <mat-option value="">All</mat-option>
+        @for (l of options()?.jobLevels ?? []; track l) {
+          <mat-option [value]="l">{{ l }}</mat-option>
+        }
+      </mat-select>
+    </mat-form-field>
+
+    <mat-form-field class="narrow" subscriptSizing="dynamic">
+      <mat-label>Status</mat-label>
+      <mat-select [value]="query().status" (selectionChange)="setFilter('status', $event.value)">
+        <mat-option value="ACTIVE">Active</mat-option>
+        <mat-option value="INACTIVE">Inactive</mat-option>
+        <mat-option value="">All</mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    @if (hasFilters()) {
+      <button mat-button type="button" (click)="clearFilters()">Clear filters</button>
+    }
+  </div>
+
+  @switch (state().status) {
+    @case ('error') {
+      <div class="error-banner" role="alert">
+        Could not load employees. {{ $any(state()).message }}
+        <button mat-button type="button" (click)="query.set({ ...query() })">Try again</button>
+      </div>
+    }
+    @default {
+      <div class="card table-card">
+        @if (state().status === 'loading') {
+          <mat-progress-bar mode="indeterminate" aria-label="Loading employees" />
+        }
+
+        @let page = $any(state()).page;
+        <div class="table-scroll">
+          <table
+            mat-table
+            matSort
+            [dataSource]="page?.content ?? []"
+            [matSortActive]="sortColumn()"
+            [matSortDirection]="query().direction ?? 'asc'"
+            (matSortChange)="onSort($event)"
+          >
+            <ng-container matColumnDef="code">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Code</th>
+              <td mat-cell *matCellDef="let e" class="muted">{{ e.employeeCode }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="name">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Name</th>
+              <td mat-cell *matCellDef="let e">
+                <div class="name">{{ e.firstName }} {{ e.lastName }}</div>
+                <div class="muted small">{{ e.email }}</div>
+              </td>
+            </ng-container>
+
+            <ng-container matColumnDef="country">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Country</th>
+              <td mat-cell *matCellDef="let e">{{ countryName(e.country) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="department">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Department</th>
+              <td mat-cell *matCellDef="let e">{{ e.department }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="jobTitle">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Job title</th>
+              <td mat-cell *matCellDef="let e">{{ e.jobTitle }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="jobLevel">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Level</th>
+              <td mat-cell *matCellDef="let e">{{ e.jobLevel }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="salary">
+              <th
+                mat-header-cell
+                *matHeaderCellDef
+                mat-sort-header
+                [disabled]="!salarySortable()"
+                class="num"
+                [title]="salarySortable() ? '' : 'Choose a country to sort salaries (amounts are in local currencies)'"
+              >
+                Salary
+              </th>
+              <td mat-cell *matCellDef="let e" class="num">{{ formatMinor(e.salaryMinor, e.currency) }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="hireDate">
+              <th mat-header-cell *matHeaderCellDef mat-sort-header>Hired</th>
+              <td mat-cell *matCellDef="let e" class="muted">{{ e.hireDate }}</td>
+            </ng-container>
+
+            <ng-container matColumnDef="status">
+              <th mat-header-cell *matHeaderCellDef>Status</th>
+              <td mat-cell *matCellDef="let e">
+                <span class="chip" [class.inactive]="e.status === 'INACTIVE'">
+                  {{ e.status === 'ACTIVE' ? 'Active' : 'Inactive' }}
+                </span>
+              </td>
+            </ng-container>
+
+            <tr mat-header-row *matHeaderRowDef="columns; sticky: true"></tr>
+            <tr
+              mat-row
+              *matRowDef="let e; columns: columns"
+              class="clickable"
+              tabindex="0"
+              (click)="open(e)"
+              (keydown.enter)="open(e)"
+            ></tr>
+          </table>
+        </div>
+
+        @if (state().status === 'ready' && page.content.length === 0) {
+          <div class="empty">
+            <strong>No employees match.</strong>
+            <span class="muted">Try a different search, or clear the filters.</span>
+          </div>
+        }
+
+        <mat-paginator
+          [length]="page?.totalElements ?? 0"
+          [pageIndex]="query().page ?? 0"
+          [pageSize]="query().size ?? 25"
+          [pageSizeOptions]="pageSizes"
+          showFirstLastButtons
+          aria-label="Select page of employees"
+          (page)="onPage($event)"
+        />
+      </div>
+    }
+  }
+</section>
