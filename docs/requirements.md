@@ -29,7 +29,7 @@ Single persona: HR Manager, with full access. Questions the product must answer:
 | F5 | **Insights dashboard**: headline totals, salary stats by country / department / level, distribution histogram, top and bottom earners | The "how do we pay people" answer |
 | F6 | **Outlier / pay-equity view**: employees far from the median of their role + level + country group | Robust median/MAD rule with a minimum percentage gap. Originally a ±2 standard deviation rule; changed after finding it cannot flag anyone in small groups |
 | F7 | **CSV export** of the filtered employee list | Lets HR keep using Excel for ad-hoc sharing; cheap and safe (read-only) |
-| F8 | **Seed script**: 10,000 realistic, deterministic employees (fixed random seed) | Also used by tests and the demo |
+| F8 | **Seed data**: 10,000 realistic, deterministic employees in plain CSV files, loaded by a Liquibase changeset into an empty database | Generated from a fixed random seed; the same files serve local runs and the demo |
 
 ## 4. Deliberately left out (and why)
 

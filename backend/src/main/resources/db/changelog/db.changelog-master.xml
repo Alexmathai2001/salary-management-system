@@ -9,4 +9,7 @@
     <include file="db/changelog/001-employees-and-salary-history.sql"/>
     <include file="db/changelog/002-fx-rates.sql"/>
 
+    <!-- Sample data (only when the "seed" context is active) -->
+    <include file="db/changelog/003-seed-sample-data.xml"/>
+
 </databaseChangeLog>

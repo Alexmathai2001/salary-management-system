@@ -12,12 +12,32 @@ cd backend
 # run the tests
 ./mvnw test
 
-# start the API with 10,000 seeded employees (skipped automatically if data already exists)
-./mvnw spring-boot:run -Dspring-boot.run.arguments="--app.seed.enabled=true"
+# start the API (an empty database is seeded automatically with 10,000 sample employees)
+./mvnw spring-boot:run
 ```
 
-Seed options (all optional): `--app.seed.count=10000`, `--app.seed.rng-seed=42`, `--app.seed.reset=true` (replace existing data).
-The seed is deterministic: the same options always produce the same data.
+### Sample data
+
+The sample data is two plain CSV files you can open and read:
+
+- `backend/src/main/resources/db/seed/employees.csv` (10,000 employees)
+- `backend/src/main/resources/db/seed/salary_history.csv` (each employee's salary changes)
+
+The FX rates are in `backend/src/main/resources/db/changelog/002-fx-rates.sql`.
+
+[Liquibase](https://www.liquibase.com) loads the CSVs through the `003-seed-sample-data` changeset (context `seed`, on by default).
+It runs only on an **empty** database and is skipped, never merged, if employees already exist, so it cannot touch real data.
+A fresh start takes about 7 seconds including the seed.
+
+- **Start without sample data:** `SPRING_LIQUIBASE_CONTEXTS=no-seed ./mvnw spring-boot:run`. Use any value other than `seed`.
+  Do not leave it empty: Liquibase reads an empty context list as "run everything", which includes the seed.
+- **Start over:** stop the app and delete `backend/data/salary.db`.
+- **Change the sample data:** the files are generated, not hand-edited. Change the deterministic generator in
+  `backend/src/test/java/com/acme/salary/seed/` and re-run it, then commit the new CSVs (a test fails if they drift):
+
+  ```bash
+  ./mvnw -q test-compile exec:java -Dexec.classpathScope=test -Dexec.mainClass=com.acme.salary.seed.SeedFileWriter
+  ```
 
 The database file defaults to `backend/data/salary.db`. Override it with `SPRING_DATASOURCE_URL`.
 

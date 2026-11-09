@@ -10,7 +10,7 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 
-/** Verifies the entity mapping and Flyway schema agree, including date and enum round-trips. */
+/** Verifies the entity mapping and the Liquibase schema agree, including date and enum round-trips. */
 @SpringBootTest
 @ActiveProfiles("test")
 @Transactional
