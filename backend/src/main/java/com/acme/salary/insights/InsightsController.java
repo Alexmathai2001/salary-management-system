@@ -66,4 +66,30 @@ public class InsightsController {
         return service.earners(new InsightsFilter(country, department, jobLevel, jobTitle, includeInactive),
                 order.equalsIgnoreCase("top"), limit);
     }
+
+    /**
+     * Employees paid far from their peers (same job title, level and country). Uses a robust median/MAD rule, and
+     * reports how many employees were not judged because their peer group was too small.
+     */
+    @GetMapping("/outliers")
+    public OutlierReport outliers(
+            @RequestParam(defaultValue = "" + OutlierParams.DEFAULT_MIN_GROUP_SIZE) int minGroupSize,
+            @RequestParam(defaultValue = "" + OutlierParams.DEFAULT_Z_THRESHOLD) double zThreshold,
+            @RequestParam(defaultValue = "" + OutlierParams.DEFAULT_MIN_DEVIATION_PCT) double minDeviationPct,
+            @RequestParam(defaultValue = "any") String direction,
+            @RequestParam(defaultValue = "50") int limit,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String jobLevel,
+            @RequestParam(required = false) String jobTitle,
+            @RequestParam(defaultValue = "false") boolean includeInactive) {
+        Outlier.Direction dir = switch (direction.toLowerCase()) {
+            case "any" -> null;
+            case "high" -> Outlier.Direction.HIGH;
+            case "low" -> Outlier.Direction.LOW;
+            default -> throw new IllegalArgumentException("direction must be 'any', 'high' or 'low'");
+        };
+        return service.outliers(new InsightsFilter(country, department, jobLevel, jobTitle, includeInactive),
+                new OutlierParams(minGroupSize, zThreshold, minDeviationPct), dir, limit);
+    }
 }

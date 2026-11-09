@@ -103,6 +103,23 @@ public class InsightsRepository {
                 Math.round(rs.getDouble("usd_cents"))));
     }
 
+    /** Every matching employee with their USD-equivalent pay (input for outlier detection), ordered by id. */
+    public List<EarnerResponse> allPay(InsightsFilter filter) {
+        Map<String, Object> params = new HashMap<>();
+        String sql = payCte(filter, params) + """
+                SELECT p.id, p.employee_code, p.first_name, p.last_name, p.country, p.department, p.job_title,
+                       p.job_level, p.currency, p.salary_minor, p.usd_cents
+                FROM pay p
+                ORDER BY p.id
+                """;
+        return jdbc.query(sql, params, (rs, i) -> new EarnerResponse(
+                rs.getLong("id"), rs.getString("employee_code"),
+                rs.getString("first_name") + " " + rs.getString("last_name"),
+                rs.getString("country"), rs.getString("department"), rs.getString("job_title"),
+                rs.getString("job_level"), rs.getString("currency"), rs.getLong("salary_minor"),
+                Math.round(rs.getDouble("usd_cents"))));
+    }
+
     /** Builds the "WITH pay AS (...)" prefix, adding only the filters that are set (all values are bound). */
     private static String payCte(InsightsFilter f, Map<String, Object> params) {
         StringBuilder where = new StringBuilder(" WHERE 1 = 1");
