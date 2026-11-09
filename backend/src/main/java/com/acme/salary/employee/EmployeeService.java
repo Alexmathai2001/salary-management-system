@@ -51,6 +51,11 @@ public class EmployeeService {
         return employees.findAll(EmployeeSpecifications.from(filter), pageable(page, size, sortKey, descending));
     }
 
+    /** Every employee matching the filter (no paging), in the same order the directory would show them. */
+    public List<Employee> export(EmployeeFilter filter, String sortKey, boolean descending) {
+        return employees.findAll(EmployeeSpecifications.from(filter), pageable(0, 1, sortKey, descending).getSort());
+    }
+
     public Employee get(Long id) {
         return employees.findById(id).orElseThrow(() -> new NotFoundException("Employee " + id + " not found"));
     }

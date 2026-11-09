@@ -3,7 +3,12 @@ package com.acme.salary.employee;
 import com.acme.salary.common.PageResponse;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
+import java.time.ZoneOffset;
 import java.util.List;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
@@ -40,6 +45,26 @@ public class EmployeeController {
         var filter = new EmployeeFilter(q, country, department, jobTitle, jobLevel, status);
         boolean descending = "desc".equalsIgnoreCase(direction);
         return PageResponse.of(service.search(filter, page, size, sort, descending), EmployeeResponse::from);
+    }
+
+    /** CSV of every employee matching the same filters as the list (not just one page). Opens cleanly in Excel. */
+    @GetMapping(value = "/export.csv", produces = "text/csv")
+    public ResponseEntity<byte[]> export(
+            @RequestParam(required = false) String q,
+            @RequestParam(required = false) String country,
+            @RequestParam(required = false) String department,
+            @RequestParam(required = false) String jobTitle,
+            @RequestParam(required = false) String jobLevel,
+            @RequestParam(required = false) EmployeeStatus status,
+            @RequestParam(defaultValue = "name") String sort,
+            @RequestParam(defaultValue = "asc") String direction) {
+        var filter = new EmployeeFilter(q, country, department, jobTitle, jobLevel, status);
+        byte[] csv = EmployeeCsvWriter.write(service.export(filter, sort, "desc".equalsIgnoreCase(direction)));
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"employees-" + LocalDate.now(ZoneOffset.UTC) + ".csv\"")
+                .contentType(new MediaType("text", "csv", StandardCharsets.UTF_8))
+                .body(csv);
     }
 
     @GetMapping("/{id}")
