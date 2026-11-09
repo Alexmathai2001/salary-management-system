@@ -1,3 +1,6 @@
+--liquibase formatted sql
+
+--changeset salary-management:002-fx-rates
 -- Fixed, HR-maintained FX table used ONLY for reporting (salaries stay in their local currency).
 -- rate_micro        = units of the currency per 1 USD, multiplied by 1,000,000 (integer, no float rounding).
 -- fraction_digits   = ISO 4217 minor-unit digits (USD 2, JPY 0); minor_unit_scale = 10^fraction_digits.
@@ -20,3 +23,5 @@ INSERT INTO fx_rates (currency, rate_micro, fraction_digits, minor_unit_scale, u
     ('CAD',       1360000, 2, 100, 0),
     ('JPY',     150000000, 0,   1, 0),
     ('BRL',       5000000, 2, 100, 0);
+
+--rollback DROP TABLE fx_rates;

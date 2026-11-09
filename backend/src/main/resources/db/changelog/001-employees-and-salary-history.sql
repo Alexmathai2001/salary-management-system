@@ -1,5 +1,8 @@
+--liquibase formatted sql
+
+--changeset salary-management:001-employees-and-salary-history
 -- NOTE: primary keys must be declared exactly INTEGER for SQLite to treat them as the rowid alias
--- (auto-increment); the entities map them with @JdbcTypeCode(INTEGER). Other 64-bit columns are BIGINT.
+-- (auto-increment), so the entities map them with @JdbcTypeCode(INTEGER). Other 64-bit columns are BIGINT.
 -- Employees: one row per person, holding the CURRENT salary.
 -- Salary is stored as integer minor units (e.g. cents) in the employee's local currency.
 CREATE TABLE employees (
@@ -41,3 +44,6 @@ CREATE TABLE salary_history (
     changed_at       TIMESTAMP NOT NULL
 );
 CREATE INDEX idx_salary_history_employee ON salary_history (employee_id, effective_date);
+
+--rollback DROP TABLE salary_history;
+--rollback DROP TABLE employees;
